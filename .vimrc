@@ -32,8 +32,13 @@ Plug 'junegunn/vim-slash'
 
 "fzf
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 
 call plug#end()
+
+" fzf
+let g:fzf_command_prefix = 'Fzf'
+nnoremap <Leader>o :FzfFiles<CR>
 
 " Tab navigation
 nnoremap tt  :tabedit<Space>
@@ -44,7 +49,7 @@ nnoremap tm  :tabm<Space>
 nnoremap tj  :tabfirst<CR>
 nnoremap tk  :tablast<CR>
 
-" Places the current match at the center of the window
+" Incremental search
 :set incsearch
 
 " Colorscheme

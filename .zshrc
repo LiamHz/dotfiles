@@ -16,6 +16,9 @@ alias ttd='arbtt-stats --dump-samples'
 alias ttd-a='arbtt-stats --dump-samples | grep \* | sort | uniq -c | sort -n'
 alias tt-dump='arbtt-dump'
 
+# bat
+export BAT_THEME="gruvbox"
+
 # fasd
 plugins=(fasd)
 eval "$(fasd --init auto)"
@@ -24,10 +27,10 @@ alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty g
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_OPTS="--layout=default"      # Add `--no-height` to make fzf fullscreen
+alias preview="fzf --preview 'bat --color=always --line-range :500 {}'"
+export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
 export FZF_DEFAULT_COMMAND="fd --type f"        # Only fzf through type: files
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-vf() { $EDITOR "$(fd -E '*.png' | fzf --preview='bat --style=numbers --color=always --line-range :500 {}')" }
 cdf() { cd $HOME && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
 
 # Pyenv
