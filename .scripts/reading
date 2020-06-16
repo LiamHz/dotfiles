@@ -1,0 +1,71 @@
+# Calibre
+export PATH=$PATH:/Applications/calibre.app/Contents/MacOS/
+
+# Download a URL's HTML, and filter out specified tags
+remove_bloat() {
+    # Define HTML tags via XPATH to filter out
+    export XSL_TEMPLATE="<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">
+    <xsl:template match=\"node()|@*\">
+      <xsl:copy>
+        <xsl:apply-templates select=\"node()|@*\"/>
+      </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match='script'/>
+    <xsl:template match='button'/>
+    <xsl:template match='path'/>
+    <xsl:template match='nav'/>
+    <xsl:template match=  \"*[starts-with(@class,'widget')  or starts-with(@id,'widget')]\"/>
+    <xsl:template match=\"div[starts-with(@class,'comment') or starts-with(@id,'comment') or
+                              starts-with(@class,'sidebar') or starts-with(@id,'sidebar') or
+                              starts-with(@class,'footer')  or starts-with(@id,'footer') or
+                              starts-with(@class,'share')   or starts-with(@id,'share') or
+                              starts-with(@class,'nav')     or starts-with(@id,'nav')]\"/>
+
+    </xsl:stylesheet>"
+
+    curl $1 -o /tmp/temp.html -sS
+    xsltproc --html <(echo "$XSL_TEMPLATE") /tmp/temp.html > /tmp/xsltemp.html
+} &> /dev/null
+
+# URL to ebook + send to Kindle
+skindle_main() {
+    # Download URL's HTML and remove bloat
+    remove_bloat $1
+    # Convert HTML file to mobi
+    ebook-convert /tmp/xsltemp.html /tmp/temp.mobi
+    # Send converted .mobi file using calibre-smtp
+    calibre-smtp --attachment /tmp/temp.mobi --relay smtp.gmail.com --port 587 --username $EMAIL --password $EMAIL_PASSWORD --encryption-method TLS $EMAIL $KINDLE_EMAIL ""
+    rm /tmp/temp.mobi && rm /tmp/temp.html && rm /tmp/xsltemp.html
+} &> /dev/null # Silence stdout and errors
+
+# Open URLs with bloat removed
+rview() {
+    # Accept arguments via stdin if no arguments are provided
+    if (( ${#} == 0 )) ; then
+        while read -r line ; do
+            remove_bloat ${line}
+            open /tmp/xsltemp.html
+        done
+    else
+        remove_bloat $1
+        open /tmp/xsltemp.html
+    fi
+}
+
+# Provide UI and stdin wrapper around skindle_main
+skindle() {
+    terminal-notifier -title "Send to Kindle" -message "Starting..."
+    # Loop through stdin for arguments if no arguments are provided
+    if (( ${#} == 0 )) ; then
+        while read -r line ; do
+            skindle_main ${line}
+            echo "Sent to Kindle: ${line}"
+        done
+    else
+        skindle_main $1
+        echo "Sent to Kindle: $1"
+    fi
+
+    terminal-notifier -title "Send to Kindle" -message "Complete!"
+}
