@@ -1,6 +1,11 @@
 # Import auth credentials
 source ~/.auth
 
+# Enable vi keybinds
+set -o vi
+# Set delay on <esc> to 10ms
+KEYTIMEOUT=1
+
 # Import all custom shell functions from directory
 for f in ~/.scripts/* ; do
     source $f
@@ -41,9 +46,12 @@ alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty g
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 alias pp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
-export FZF_DEFAULT_COMMAND="fd --type f"        # Only fzf through type: files
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# fzf git diff
+alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'"
+# fzf directory
 cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
+# export FZF_DEFAULT_COMMAND="fd --type f"        # Only fzf through type: files
+# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # Pyenv
 eval "$(pyenv init -)"
