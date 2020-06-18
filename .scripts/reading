@@ -1,31 +1,33 @@
 # Calibre
 export PATH=$PATH:/Applications/calibre.app/Contents/MacOS/
 
-# Download a URL's HTML, and filter out specified tags
+# Download a URL's HTML, copy and filter out specified tags
+# Note: XPATH copy tags for untested websites may have to be added
+# Note: If multiple sibling elements are marked to be copied,
+#       there will be duplication of HTML tags
 remove_bloat() {
-    # Define HTML tags via XPATH to filter out
-    export XSL_TEMPLATE="<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">
-    <xsl:template match=\"node()|@*\">
-      <xsl:copy>
-        <xsl:apply-templates select=\"node()|@*\"/>
-      </xsl:copy>
-    </xsl:template>
+    # Tested on: SSC, LessWrong, Putanumonit, Ribbonfarm, Gwern
+    # TODO Passing putanumonit to rview with grep and awk doesn't work
+    export XSL_COPY_TEMPLATE=$(generate_xsl_copy_template \
+        "//style" "//head" "//main/header" "//main/article" "//div[@class='story']" \
+        "//h1[contains(@class,'PostsPageTitle-root')]" "//div[@class='PostsPage-postContent']" \
+        "//div[contains(@id,'content')]/div[contains(@id,'post-') or contains(@class,'post-')]" \
+    )
+    export XSL_REMOVE_TEMPLATE=$(generate_xsl_remove_template \
+        "script" \
+        "div[@id='sidebar']" \
+        "div[@id='comments']" \
+        "div[@class='related-posts']" \
+        "div[@class='pjgm-postutility']" \
+        "div[contains(@class,'widget')]" \
+        "div[starts-with(@class,'author')]" \
+        "div[starts-with(@class,'share') or starts-with(@id,'share')]" \
+    )
 
-    <xsl:template match='script'/>
-    <xsl:template match='button'/>
-    <xsl:template match='path'/>
-    <xsl:template match='nav'/>
-    <xsl:template match=  \"*[starts-with(@class,'widget')  or starts-with(@id,'widget')]\"/>
-    <xsl:template match=\"div[starts-with(@class,'comment') or starts-with(@id,'comment') or
-                              starts-with(@class,'sidebar') or starts-with(@id,'sidebar') or
-                              starts-with(@class,'footer')  or starts-with(@id,'footer') or
-                              starts-with(@class,'share')   or starts-with(@id,'share') or
-                              starts-with(@class,'nav')     or starts-with(@id,'nav')]\"/>
-
-    </xsl:stylesheet>"
-
-    curl $1 -o /tmp/temp.html -sS
-    xsltproc --html <(echo "$XSL_TEMPLATE") /tmp/temp.html > /tmp/xsltemp.html
+    # The -L flag tells curl to follow redirects
+    curl -L $1 -o /tmp/temp.html -sS
+    xsltproc --html <(echo "$XSL_COPY_TEMPLATE") /tmp/temp.html > /tmp/xsltemp0.html
+    xsltproc --html <(echo "$XSL_REMOVE_TEMPLATE") /tmp/xsltemp0.html > /tmp/xsltemp.html
 } &> /dev/null
 
 # URL to ebook + send to Kindle

@@ -1,0 +1,63 @@
+xsl_copy_macro() {
+    echo "<xsl:call-template name=\"copyElementsOnAncestorAxis\">
+              <xsl:with-param name=\"nodeList\" select=\"$1/ancestor-or-self::*\"/>
+          </xsl:call-template> "
+}
+
+xsl_remove_macro() {
+    echo "<xsl:template match=\"$1\" />"
+}
+
+# From Robert Rossney
+# https://bit.ly/3hGWbNj
+# Generate an XSL template that copies all ancestors and descendants of 
+# HTML tags that match the command's XPATH arguments
+generate_xsl_copy_template() {
+    echo "
+    <xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">
+     <xsl:template match=\"/\">
+        <!-- Elements to copy the ancestors and descendants of -->
+        $(for tag in $@; do xsl_copy_macro $tag; done)
+      </xsl:template>
+
+      <xsl:template name=\"copyElementsOnAncestorAxis\">
+        <xsl:param name=\"nodeList\"/>
+        <xsl:choose>
+          <!-- if the context node is the last node in the list, copy it entirely -->
+          <xsl:when test=\". = \$nodeList[count(\$nodeList)]\">
+            <xsl:copy-of select=\".\"/>
+          </xsl:when>
+          <!-- otherwise, just copy the element, its attributes, and any child element that
+               is also in the node list -->
+          <xsl:otherwise>
+            <xsl:copy>
+              <xsl:copy-of select=\"@*\"/>
+              <xsl:for-each select=\"*[. = \$nodeList]\">
+                <xsl:call-template name=\"copyElementsOnAncestorAxis\">
+                  <xsl:with-param name=\"nodeList\"
+                                  select=\"\$nodeList\"/>
+                </xsl:call-template>
+              </xsl:for-each>
+            </xsl:copy>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:template>
+
+    </xsl:stylesheet>"
+}
+
+# Generate an XSL template that filters all HTML tags
+# that match the command's XPATH arguments
+generate_xsl_remove_template() {
+    echo "
+    <xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">
+     <xsl:output omit-xml-declaration=\"yes\"/>
+        <xsl:template match=\"node()|@*\">
+          <xsl:copy>
+             <xsl:apply-templates select=\"node()|@*\"/>
+          </xsl:copy>
+        </xsl:template>
+
+        $(for tag in $@; do xsl_remove_macro $tag; done)
+    </xsl:stylesheet>"
+}
