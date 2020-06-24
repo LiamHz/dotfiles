@@ -44,8 +44,17 @@ alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty g
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-alias pp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
+# fzf with code preview
+alias vpp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap"
+# fzf with grep and code preview
+fpp() {
+    if (($# == 0)) ; then
+        vpp
+    else
+        grep -r -l $1 ./ | fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap
+    fi
+}
 # fzf git diff
 alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'"
 # fzf directory
