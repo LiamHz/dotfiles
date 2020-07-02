@@ -28,6 +28,12 @@ Plug 'junegunn/vim-slash'
 "fzf
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
+
+" Diff lines
+Plug 'AndrewRadev/linediff.vim'
+
+" Link to specific line in file
+Plug 'wsdjeg/vim-fetch'
 call plug#end()
 
 " Map leader key to space
@@ -37,6 +43,7 @@ let mapleader=" "
 source ~/.cache/calendar.vim/credentials.vim
 
 " Leader remaps
+nnoremap <Leader>t :e ~/Documents/personal/notes/todo.md<CR>
 nnoremap <Leader>s :w<CR>
 nnoremap <Leader>c :Calendar<CR>
 nnoremap <Leader>k :Goyo <bar> set linebreak<CR>
@@ -44,17 +51,29 @@ nnoremap <Leader>l :Limelight!!<CR>
 nnoremap <Leader>o :w<CR>:FzfFiles<CR>
 nnoremap <Leader>f :w<CR>:FzfRg<CR>
 
+" Open Markdown style relative file
+nnoremap <Leader>g :w<CR>f(lgf
+
 " Write and switch to alternate file
 nnoremap <Leader>p :w<CR><C-^>
 
 " Fast paste from clipboard
 nnoremap <Leader>v "*p`]
-"
+
 " Browse UltiSnip snippets from honza/vim-snippes
 nnoremap <Leader>u :FzfFiles ~/.vim/plugged/vim-snippets/UltiSnips<CR>
 
-" Simple
+" Toggle todo item
+nnoremap <silent> <Leader>e
+    \ :s/^ *./\=tr(submatch(0), '-+', '+-')<CR>
+    \^:silent! s/\v(TODO<bar>DONE)/\={'TODO':'DONE','DONE':'TODO'}[submatch(0)]<CR>^
+
+" Normal remaps
 nnoremap Y y$
+nnoremap Q @q
+nnoremap E ge
+vnoremap > >gv
+vnoremap < <gv
 
 " Swap the ; and : keys
 nnoremap ; :
@@ -78,26 +97,6 @@ nnoremap <C-L> <C-W><C-L>
 nnoremap <C-H> <C-W><C-H>
 nnoremap <C-Q> <C-W><C-Q>
 
-augroup MarkdownRemaps
-    " Prevent autocmds from piling up upon reloading vimrc
-    autocmd!
-    " Align on character
-    autocmd FileType markdown xmap ga <Plug>(EasyAlign)
-    autocmd FileType markdown vnoremap <Leader><Bslash> :EasyAlign*<Bar><Enter>
-    " Generate valid ToC for markdown file
-    autocmd FileType markdown nnoremap <Leader>i :InsertToc<CR>i## Table of Contents<ESC>vip:s/\((#.*\)\@<=[\.:']//g<CR>{j
-    " Run Markdown code block with scheme
-    autocmd FileType markdown nnoremap <Leader>r ?```<CR>jVNk:term scheme<CR>
-    " Launch Markdown commands
-    autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
-    autocmd FileType markdown nnoremap <Leader>t :Toch<CR>
-augroup END
-
-" Incremental search
-:set incsearch
-" Change default split locations
-set splitbelow splitright
-
 " Colorscheme
 syntax on
 set background=dark
@@ -105,6 +104,53 @@ let g:gruvbox_italic = 1
 let g:gruvbox_italicize_comments = 0
 let g:gruvbox_contrast_dark = 'hard'
 colorscheme gruvbox
+
+augroup MarkdownFiles
+    " Prevent autocmds from piling up upon reloading vimrc
+    autocmd!
+    " Spellcheck
+    autocmd FileType markdown setlocal spell
+    " Align on character
+    autocmd FileType markdown xmap ga <Plug>(EasyAlign)
+    autocmd FileType markdown nnoremap <Leader><Bslash> vip:EasyAlign*<Bar><CR>
+    " Generate valid ToC for markdown file
+    autocmd FileType markdown nnoremap <Leader>i :InsertToc<CR>i## Table of Contents<ESC>vip:s/\((#.*\)\@<=[\.:']//g<CR>{j
+    " Run Markdown code block with scheme
+    autocmd FileType markdown nnoremap <Leader>r ?```<CR>jVNk:term scheme<CR><C-W>k<C-O><C-O><C-W>j
+    " Launch Markdown commands
+    autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
+    autocmd FileType markdown nnoremap <Leader>; :Toc<CR>
+    " Custom highlight group
+    autocmd FileType markdown hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+    " Regex match for mdTodo group
+    " Specify allowed preceding characters and optional trailing date
+    autocmd Filetype markdown call matchadd('mdTodo', '\v^[\-+ ]*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+augroup END
+
+augroup AgendaFiles
+    autocmd!
+    autocmd BufRead */notes/todo.md call matchadd('Comment', '/Users/liamhinzman.*')
+    " Clear file, and populate it with all TODO items in ~/Documents/personal
+    autocmd BufRead */notes/todo.md norm dG
+    autocmd BufRead */notes/todo.md read!
+        \ grep --exclude="**notes/todo.md" -rn TODO ~/Documents/personal
+        \ | awk -F ':' '{sub(/[\-+ ]*TODO/, "TODO"); print $3" | "$1":"$2}'
+        \ | column -t -s "|"
+        \ | sort -n 
+    autocmd BufRead */notes/todo.md norm ggdd
+    autocmd BufRead */notes/todo.md nnoremap <Leader>j $F/gF
+    autocmd BufEnter */notes/todo.md setlocal nospell
+augroup END
+
+" Incremental search
+:set incsearch
+
+" Change default split locations
+set splitbelow splitright
+
+" Case insensitive search
+set ignorecase
+set smartcase
 
 " Set indent levels to 4
 set tabstop=4
@@ -115,7 +161,7 @@ set expandtab
 augroup FiletypeSpecificSettings
     autocmd!
     autocmd Filetype cfg setlocal syntax=haskell
-    autocmd Filetype javascript,json,markdown setlocal et ts=2 sw=2 sts=2
+    autocmd Filetype javascript,html,json,markdown setlocal et ts=2 sw=2 sts=2
 augroup END
 
 " fzf.vim
@@ -132,8 +178,10 @@ let g:limelight_conceal_ctermfg = 240
 
 " vim-markdown
 let g:markdown_folding = 1
+let g:vim_markdown_fenced_languages = ['mermaid=javascript'] " Apply javascript style syntax highlighting to mermaid code
 set conceallevel=2  " Conceal markdown syntax (e.g. **, _)
 set concealcursor=n " Only conceal markdown syntax in normal mode
+let g:vim_markdown_conceal_code_blocks = 0 " Disable conceal for code blocks
 
 " markdown-preview.nvim
 filetype plugin on
