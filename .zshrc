@@ -46,21 +46,24 @@ alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty g
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
 # fzf with code preview
-alias vpp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap"
+alias vpp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'"
 # fzf with grep and code preview
 fpp() {
     if (($# == 0)) ; then
         vpp
     else
-        grep -r -l $1 ./ | fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap
+        grep -r -l $1 ./ | fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'
     fi
 }
 # fzf git diff
 alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'"
 # fzf directory
 cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
-# export FZF_DEFAULT_COMMAND="fd --type f"        # Only fzf through type: files
-# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# Filter fzf; Affects fzf.vim
+export FZF_DEFAULT_COMMAND="fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/'"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+fdd() { fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/' }
 
 # Pyenv
 eval "$(pyenv init -)"
