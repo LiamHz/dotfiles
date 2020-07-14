@@ -1,11 +1,12 @@
 call plug#begin()
 " Markdown
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app & yarn install'  }
-Plug 'godlygeek/tabular'
-Plug 'plasticboy/vim-markdown'
 Plug 'junegunn/vim-easy-align'
 Plug 'chmp/mdnav'
-Plug 'itchyny/calendar.vim'
+"Plug 'itchyny/calendar.vim'
+
+" Profile startup time
+Plug 'dstein64/vim-startuptime'
 
 " QoL features for writing
 Plug 'junegunn/goyo.vim'
@@ -15,8 +16,8 @@ Plug 'junegunn/limelight.vim'
 Plug 'morhetz/gruvbox'
 
 "Syntax support
-Plug 'yuezk/vim-js'
-Plug 'maxmellon/vim-jsx-pretty'
+Plug 'sheerun/vim-polyglot'
+Plug 'LiamHz/vim-vulkan'
 
 " Snippets
 Plug 'SirVer/ultisnips'
@@ -43,7 +44,7 @@ let mapleader=" "
 source ~/.cache/calendar.vim/credentials.vim
 
 " Leader remaps
-nnoremap <Leader>t :e ~/Documents/personal/notes/todo.md<CR>
+nnoremap <Leader>t :w<CR>:e ~/Documents/personal/notes/todo.md<CR>
 nnoremap <Leader>s :w<CR>
 nnoremap <Leader>c :Calendar<CR>
 nnoremap <Leader>k :Goyo <bar> set linebreak<CR>
@@ -64,9 +65,8 @@ nnoremap <Leader>v "*p`]
 nnoremap <Leader>u :FzfFiles ~/.vim/plugged/vim-snippets/UltiSnips<CR>
 
 " Toggle todo item
-nnoremap <silent> <Leader>e
-    \ :s/^ *./\=tr(submatch(0), '-+', '+-')<CR>
-    \^:silent! s/\v(TODO<bar>DONE)/\={'TODO':'DONE','DONE':'TODO'}[submatch(0)]<CR>^
+nnoremap <silent> <Leader>e :silent! s/\v(TODO<bar>DONE)/\={'TODO':'DONE','DONE':'TODO'}[submatch(0)]<CR>^
+      "\ :s/^ *./\=tr(submatch(0), '-+', '+-')<CR>
 
 " Normal remaps
 nnoremap Y y$
@@ -97,49 +97,72 @@ nnoremap <C-L> <C-W><C-L>
 nnoremap <C-H> <C-W><C-H>
 nnoremap <C-Q> <C-W><C-Q>
 
+" Keep text and filter when opening completion menu
+inoremap <expr> <C-n> pumvisible() ? '<C-n>' : "<C-n><C-p>\<lt>Down>"
+" Map <Enter> key to select highlighted menu item when completion popup menu is visible
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+
 " Colorscheme
 syntax on
 set background=dark
 let g:gruvbox_italic = 1
 let g:gruvbox_italicize_comments = 0
 let g:gruvbox_contrast_dark = 'hard'
+let g:gruvbox_invert_selection='0'
 colorscheme gruvbox
 
+augroup Config
+  autocmd!
+  " Get zsh startup files (including .zshrc)
+  autocmd vimenter * let &shell='/bin/zsh -i'
+augroup END
+
+augroup CppFiles
+  autocmd!
+  autocmd FileType cpp nnoremap <Leader>rc :w<CR>:!cb<CR>
+augroup END
+
+" GLSL syntax highlighting
+autocmd! BufNewFile,BufRead *.vs,*.fs set ft=glsl
+
 augroup MarkdownFiles
-    " Prevent autocmds from piling up upon reloading vimrc
-    autocmd!
-    " Spellcheck
-    autocmd FileType markdown setlocal spell
-    " Align on character
-    autocmd FileType markdown xmap ga <Plug>(EasyAlign)
-    autocmd FileType markdown nnoremap <Leader><Bslash> vip:EasyAlign*<Bar><CR>
-    " Generate valid ToC for markdown file
-    autocmd FileType markdown nnoremap <Leader>i :InsertToc<CR>i## Table of Contents<ESC>vip:s/\((#.*\)\@<=[\.:']//g<CR>{j
-    " Run Markdown code block with scheme
-    autocmd FileType markdown nnoremap <Leader>r ?```<CR>jVNk:term scheme<CR><C-W>k<C-O><C-O><C-W>j
-    " Launch Markdown commands
-    autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
-    autocmd FileType markdown nnoremap <Leader>; :Toc<CR>
-    " Custom highlight group
-    autocmd FileType markdown hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-    " Regex match for mdTodo group
-    " Specify allowed preceding characters and optional trailing date
-    autocmd Filetype markdown call matchadd('mdTodo', '\v^[\-+ ]*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+  " Prevent autocmds from piling up upon reloading vimrc
+  autocmd!
+  " Spellcheck
+  autocmd FileType markdown setlocal spell
+  " Align on character
+  autocmd FileType markdown nnoremap <Leader><Bslash> vip:EasyAlign*<Bar><CR>
+  " Generate valid ToC for markdown file
+  autocmd FileType markdown nnoremap <Leader>i :InsertToc<CR>i## Table of Contents<ESC>vip:s/\((#.*\)\@<=[\.:']//g<CR>{j
+  " Run Markdown code block with scheme
+  autocmd FileType markdown nnoremap <Leader>rl ?```<CR>jVNk:term scheme<CR><C-W>k<C-O><C-O><C-W>j
+  " Launch Markdown commands
+  autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
+  autocmd FileType markdown nnoremap <Leader>; :Toc<CR>
+  " Custom highlight group
+  autocmd FileType * hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  " Regex match for mdTodo group
+  " Specify allowed preceding characters and optional trailing date format
+  autocmd FileType * call matchadd('mdTodo', '\v^[^A-Za-z]*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
 augroup END
 
 augroup AgendaFiles
-    autocmd!
-    autocmd BufRead */notes/todo.md call matchadd('Comment', '/Users/liamhinzman.*')
-    " Clear file, and populate it with all TODO items in ~/Documents/personal
-    autocmd BufRead */notes/todo.md norm dG
-    autocmd BufRead */notes/todo.md read!
+  autocmd!
+  autocmd BufRead */notes/todo.md call matchadd('Comment', '/Users/liamhinzman.*')
+  " Clear file, and populate it with all _TODO items in ~/Documents/personal
+  " TODO Create heading 'Today' that matches all TODOs with :put=strftime('%m/%d')
+  " TODO Create keybind that creates a _TODO with the current data using
+  "      :put=strftime('%m'd')
+  " TODO Create keybinds that increment / decrement the day of a _TODO
+  autocmd BufRead */notes/todo.md norm dG
+  autocmd BufRead */notes/todo.md read!
         \ grep --exclude="**notes/todo.md" -rn TODO ~/Documents/personal
-        \ | awk -F ':' '{sub(/[\-+ ]*TODO/, "TODO"); print $3" | "$1":"$2}'
+        \ | awk -F ':' '{sub(/  *[^a-zA-Z]*TODO/, "TODO"); print $3"|"$1":"$2}'
         \ | column -t -s "|"
         \ | sort -n 
-    autocmd BufRead */notes/todo.md norm ggdd
-    autocmd BufRead */notes/todo.md nnoremap <Leader>j $F/gF
-    autocmd BufEnter */notes/todo.md setlocal nospell
+  autocmd BufRead */notes/todo.md norm ggdd
+  autocmd BufRead */notes/todo.md nnoremap <Leader>j :w<CR>$F/gF
+  autocmd BufEnter */notes/todo.md setlocal nospell
 augroup END
 
 " Incremental search
@@ -152,16 +175,17 @@ set splitbelow splitright
 set ignorecase
 set smartcase
 
-" Set indent levels to 4
-set tabstop=4
-set softtabstop=4
-set shiftwidth=4
+" Set indent levels to 2
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
 set expandtab
 
 augroup FiletypeSpecificSettings
-    autocmd!
-    autocmd Filetype cfg setlocal syntax=haskell
-    autocmd Filetype javascript,html,json,markdown setlocal et ts=2 sw=2 sts=2
+  autocmd!
+  autocmd FileType * xmap ga <Plug>(EasyAlign)
+  autocmd Filetype cfg setlocal syntax=haskell
+  "autocmd Filetype javascript,html,json,markdown,glsl setlocal et ts=2 sw=2 sts=2
 augroup END
 
 " fzf.vim
@@ -173,6 +197,7 @@ let g:UltiSnipsJumpForwardTrigger="<c-b>"
 let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " Limelight and Goyo config
+let g:goyo_width=84
 let g:limelight_conceal_ctermfg = 'gray'
 let g:limelight_conceal_ctermfg = 240
 
@@ -189,16 +214,16 @@ let g:mkdp_auto_close = 0
 let g:mkdp_refresh_slow = 1
 let g:mkdp_page_title = '${name}'
 let g:mkdp_preview_options = {
-    \ 'maid': { 'theme': 'default' }
-    \ }
+      \ 'maid': { 'theme': 'default' }
+      \ }
 let g:mkdp_markdown_css=expand('~/Documents/resources/dev/github-markdown.css')
 
 " Close ToC menu on <Enter>
 nnoremap <expr><enter> &ft=="qf" ? "<cr>:lcl<cr>" : (getpos(".")[2]==1 ? "i<cr><esc>": "i<cr><esc>l")
 augroup markdownSettings
-    autocmd!
-    autocmd FileType markdown norm zR
-    autocmd FileType markdown setlocal indentexpr=
+  autocmd!
+  autocmd FileType markdown norm zR
+  autocmd FileType markdown setlocal indentexpr=
 augroup END
 
 " calendar.vim
@@ -216,22 +241,22 @@ let g:weekday_color = 0
 let g:weekday_fg_color = 0
 
 augroup calendar-mappings
-    autocmd!
-    " Remap calendar view navigation
-    autocmd FileType calendar nmap <buffer> <C-h> <Plug>(calendar_view_left)
-    autocmd FileType calendar nmap <buffer> <C-l> <Plug>(calendar_view_right)
+  autocmd!
+  " Remap calendar view navigation
+  autocmd FileType calendar nmap <buffer> <C-h> <Plug>(calendar_view_left)
+  autocmd FileType calendar nmap <buffer> <C-l> <Plug>(calendar_view_right)
 augroup END
 
 " Disable specific highlight groups
 " Enabled highlight groups can be shown by running
 " :so $VIMRUNTIME/syntax/hitest.vim
 augroup calendar-highlights
-    autocmd!
-    autocmd FileType calendar hi! link CalendarSunday Normal
-    autocmd FileType calendar hi! link CalendarSaturday Normal
-    autocmd FileType calendar hi! link CalendarTodaySunday Normal
-    autocmd FileType calendar hi! link CalendarTodaySaturday Normal
-    autocmd FileType calendar hi! link CalendarDayTitle Normal
-    autocmd FileType calendar hi! link CalendarSaturdayTitle Normal
-    autocmd FileType calendar hi! link CalendarSundayTitle Normal
+  autocmd!
+  autocmd FileType calendar hi! link CalendarSunday Normal
+  autocmd FileType calendar hi! link CalendarSaturday Normal
+  autocmd FileType calendar hi! link CalendarTodaySunday Normal
+  autocmd FileType calendar hi! link CalendarTodaySaturday Normal
+  autocmd FileType calendar hi! link CalendarDayTitle Normal
+  autocmd FileType calendar hi! link CalendarSaturdayTitle Normal
+  autocmd FileType calendar hi! link CalendarSundayTitle Normal
 augroup END
