@@ -19,6 +19,13 @@ Plug 'morhetz/gruvbox'
 Plug 'sheerun/vim-polyglot'
 Plug 'LiamHz/vim-vulkan'
 
+" Git
+Plug 'tpope/vim-fugitive'
+
+" Autocompletion
+"Plug 'xavierd/clang_complete'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
 " Snippets
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
@@ -44,19 +51,26 @@ let mapleader=" "
 source ~/.cache/calendar.vim/credentials.vim
 
 " Leader remaps
-nnoremap <Leader>t :w<CR>:e ~/Documents/personal/notes/todo.md<CR>
+"nnoremap <Leader>t :w<CR>:e ~/Documents/personal/notes/todo.md<CR>
+nnoremap <Leader>t :term<CR><C-w>15-
 nnoremap <Leader>s :w<CR>
 nnoremap <Leader>c :Calendar<CR>
+let mapleader=" "
 nnoremap <Leader>k :Goyo <bar> set linebreak<CR>
+nnoremap <Leader>a :MarkdownPreview<CR>
 nnoremap <Leader>l :Limelight!!<CR>
-nnoremap <Leader>o :w<CR>:FzfFiles<CR>
-nnoremap <Leader>f :w<CR>:FzfRg<CR>
+nnoremap <Leader>o :FzfFiles<CR>
+nnoremap <Leader>f :FzfRg<CR>
+
+" vim-fugitive shortcuts
+nnoremap <Leader>gb :Gblame<CR>
+nnoremap <Leader>gd :Gvdiffsplit<CR>
 
 " Open Markdown style relative file
-nnoremap <Leader>g :w<CR>f(lgf
+"nnoremap <Leader>g :w<CR>f(lgf
 
 " Write and switch to alternate file
-nnoremap <Leader>p :w<CR><C-^>
+nnoremap <Leader>p <C-^>
 
 " Fast paste from clipboard
 nnoremap <Leader>v "*p`]
@@ -68,10 +82,17 @@ nnoremap <Leader>u :FzfFiles ~/.vim/plugged/vim-snippets/UltiSnips<CR>
 nnoremap <silent> <Leader>e :silent! s/\v(TODO<bar>DONE)/\={'TODO':'DONE','DONE':'TODO'}[submatch(0)]<CR>^
       "\ :s/^ *./\=tr(submatch(0), '-+', '+-')<CR>
 
+" Quickfix navigation
+nnoremap ]q :w<CR>:cnext<CR>
+nnoremap [q :w<CR>:cprevious<CR>
+
 " Normal remaps
 nnoremap Y y$
 nnoremap Q @q
-nnoremap E ge
+
+" Fast indentation
+nnoremap > >>
+nnoremap < <<
 vnoremap > >gv
 vnoremap < <gv
 
@@ -90,17 +111,9 @@ nnoremap tl  :tablast<CR>
 nnoremap td  :tabclose<CR>
 nnoremap tm  :tabm<Space>
 
-" Switching between splits
-nnoremap <C-J> <C-W><C-J>
-nnoremap <C-K> <C-W><C-K>
-nnoremap <C-L> <C-W><C-L>
-nnoremap <C-H> <C-W><C-H>
-nnoremap <C-Q> <C-W><C-Q>
-
-" Keep text and filter when opening completion menu
-inoremap <expr> <C-n> pumvisible() ? '<C-n>' : "<C-n><C-p>\<lt>Down>"
 " Map <Enter> key to select highlighted menu item when completion popup menu is visible
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+"autocmd! FileType cpp inoremap <expr> <C-n> pumvisible() ? '<C-n>' : '<C-x><C-u><C-p><Down>'
 
 " Colorscheme
 syntax on
@@ -111,19 +124,74 @@ let g:gruvbox_contrast_dark = 'hard'
 let g:gruvbox_invert_selection='0'
 colorscheme gruvbox
 
+" Column highlight
+"highlight OverLength ctermbg=red ctermfg=white guibg=#592929
+"match OverLength /\%73v.\+/
+
+" Better foldtext
+set foldmethod=indent
+function! NeatFoldText()
+  let line = ' ' . substitute(getline(v:foldstart), '^\s*"\?\s*\|\s*"\?\s*{{' . '{\d*\s*', '', 'g') . ' '
+  let lines_count = v:foldend - v:foldstart + 1
+  let lines_count_text = '| ' . printf("%10s", lines_count . ' lines') . ' |'
+  let foldchar = matchstr(&fillchars, 'fold:\zs.')
+  let foldtextstart = strpart('+' . repeat(foldchar, v:foldlevel*2) . line, 0, (winwidth(0)*2)/3)
+  let foldtextend = lines_count_text . repeat(foldchar, 8)
+  let foldtextlength = strlen(substitute(foldtextstart . foldtextend, '.', 'x', 'g')) + &foldcolumn
+  return foldtextstart . repeat(foldchar, winwidth(0)-foldtextlength) . foldtextend
+endfunction
+set foldtext=NeatFoldText()
+
+" coc completion
+" Goto definitions
+nnoremap <silent> gd <Plug>(coc-definition)
+nnoremap <silent> gy <Plug>(coc-type-definition)
+nnoremap <silent> gi <Plug>(coc-implementation)
+nnoremap <silent> gr <Plug>(coc-references)
+
+" Symbol renaming.
+nnoremap <leader>rn <Plug>(coc-rename)
+
+nnoremap <C-l> f,2lvt,<C-g>
+inoremap <C-l> <ESC>f,2lvt,<C-g>
+
+" Termdebug
+packadd termdebug
+let g:termdebug_wide=1
+
 augroup Config
   autocmd!
+  " Unfold all folds on file load
+  autocmd FileType * norm zR
   " Get zsh startup files (including .zshrc)
-  autocmd vimenter * let &shell='/bin/zsh -i'
+  autocmd vimenter * let &shell='/bin/zsh -l'
+  autocmd BufNewFile,BufRead * setlocal completeopt=menuone
+  " Enable coc for specific files
+  autocmd FileType * execute "silent! CocDisable"
+  autocmd BufNew,BufEnter *.cpp,*.h,*.hpp execute "silent! CocEnable"
+  autocmd BufLeave *.cpp,*.h,*.hpp execute "silent! CocDisable"
 augroup END
 
 augroup CppFiles
   autocmd!
-  autocmd FileType cpp nnoremap <Leader>rc :w<CR>:!cb<CR>
+  autocmd FileType cpp nnoremap <Leader>rc :!cd build && make && ./Excal && cd ..<CR>
+  autocmd FileType cpp nnoremap <Leader>rb :!cd build && cmake .. && make && ./Excal && cd ..<CR>
+  autocmd FileType cpp nnoremap <silent> <Leader>dd :!cd ../build && cmake .. && make<CR>
+    \:Termdebug ../build/Excal<CR>
+    \set startup-with-shell off<CR>
+    \<C-w>10-<C-w>w
+  autocmd FileType cpp nnoremap <silent> <Leader>dr :Run<CR>
+  autocmd FileType cpp nnoremap <silent> <Leader>di :Break<CR>
+  autocmd FileType cpp nnoremap <silent> <Leader>do :Clear<CR>
+  autocmd FileType cpp nnoremap <silent> <Leader>dl :Step<CR>
+  autocmd FileType cpp nnoremap <silent> <Leader>dj :Continue<CR>
+  autocmd FileType cpp let g:limelight_bop = ' *}\n.*\n \zs *\(void\|bool\|vk\).*('
+  autocmd FileType cpp let g:limelight_eop = ' *}\n\ze.*\n^ *\(void\|bool\|vk\).*('
+  "autocmd FileType cpp nnoremap <Leader>ll mz?void .*(<CR>V%$%:Limelight<CR>'z
 augroup END
 
 " GLSL syntax highlighting
-autocmd! BufNewFile,BufRead *.vs,*.fs set ft=glsl
+autocmd! BufNewFile,BufRead *.vs,*.fs,*.vert,*.frag set ft=glsl
 
 augroup MarkdownFiles
   " Prevent autocmds from piling up upon reloading vimrc
@@ -142,8 +210,9 @@ augroup MarkdownFiles
   " Custom highlight group
   autocmd FileType * hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
   " Regex match for mdTodo group
-  " Specify allowed preceding characters and optional trailing date format
-  autocmd FileType * call matchadd('mdTodo', '\v^[^A-Za-z]*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+  " Specify optional included trailing date format
+  autocmd FileType * call matchadd('mdTodo', '\v.{-}\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+  " Disable coc
 augroup END
 
 augroup AgendaFiles
@@ -181,15 +250,9 @@ set softtabstop=2
 set shiftwidth=2
 set expandtab
 
-augroup FiletypeSpecificSettings
-  autocmd!
-  autocmd FileType * xmap ga <Plug>(EasyAlign)
-  autocmd Filetype cfg setlocal syntax=haskell
-  "autocmd Filetype javascript,html,json,markdown,glsl setlocal et ts=2 sw=2 sts=2
-augroup END
-
 " fzf.vim
 let g:fzf_command_prefix = 'Fzf'
+let g:fzf_layout = { 'window': { 'width': 1, 'height': 0.4, 'yoffset': 1, 'border': 'rounded' } }
 
 " UltiSnippets config
 let g:UltiSnipsExpandTrigger="<tab>"
@@ -197,9 +260,22 @@ let g:UltiSnipsJumpForwardTrigger="<c-b>"
 let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " Limelight and Goyo config
-let g:goyo_width=84
+let g:goyo_width=80
 let g:limelight_conceal_ctermfg = 'gray'
 let g:limelight_conceal_ctermfg = 240
+
+function! s:goyo_enter()
+  hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  call matchadd('mdTodo', '\v.*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+endfunction
+
+function! s:goyo_leave()
+  hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  call matchadd('mdTodo', '\v.*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+endfunction
+
+autocmd! User GoyoEnter nested call <SID>goyo_enter()
+autocmd! User GoyoLeave nested call <SID>goyo_leave()
 
 " vim-markdown
 let g:markdown_folding = 1
@@ -218,11 +294,19 @@ let g:mkdp_preview_options = {
       \ }
 let g:mkdp_markdown_css=expand('~/Documents/resources/dev/github-markdown.css')
 
+augroup FiletypeSpecificSettings
+  autocmd!
+  autocmd FileType * xmap ga <Plug>(EasyAlign)
+  autocmd FileType cfg setlocal syntax=haskell
+  autocmd FileType cpp let g:goyo_width=90
+  autocmd Filetype html setlocal et ts=4 sw=4 sts=4
+augroup END
+
+
 " Close ToC menu on <Enter>
 nnoremap <expr><enter> &ft=="qf" ? "<cr>:lcl<cr>" : (getpos(".")[2]==1 ? "i<cr><esc>": "i<cr><esc>l")
 augroup markdownSettings
   autocmd!
-  autocmd FileType markdown norm zR
   autocmd FileType markdown setlocal indentexpr=
 augroup END
 

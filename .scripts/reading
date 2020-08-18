@@ -7,21 +7,25 @@ export PATH=$PATH:/Applications/calibre.app/Contents/MacOS/
 #       there will be duplication of HTML tags
 remove_bloat() {
     # Tested on: SSC, LessWrong, Putanumonit, Ribbonfarm, Gwern
-    # TODO Passing putanumonit to rview with grep and awk doesn't work
     export XSL_COPY_TEMPLATE=$(generate_xsl_copy_template \
-        "//style" "//head" "//main/header" "//main/article" "//div[@class='story']" \
+        "//style" "//head" "//main/header" "//main/article" "//div/article/div[@class='post-content']" \
         "//h1[contains(@class,'PostsPageTitle-root')]" "//div[@class='PostsPage-postContent']" \
         "//div[contains(@id,'content')]/div[contains(@id,'post-') or contains(@class,'post-')]" \
+        "//div[@id='main']" "//div[@class='pf-content']" "//div[@class='story']" \
     )
+
     export XSL_REMOVE_TEMPLATE=$(generate_xsl_remove_template \
+        "form" \
         "script" \
+        "footer" \
+        "*[@id='comments']" \
         "div[@id='sidebar']" \
-        "div[@id='comments']" \
         "div[@class='related-posts']" \
+        "div[contains(@class,'footer')]" \
         "div[@class='pjgm-postutility']" \
-        "div[contains(@class,'widget')]" \
         "div[starts-with(@class,'author')]" \
         "div[starts-with(@class,'share') or starts-with(@id,'share')]" \
+        "div[contains(@class,'widget') and not(contains(@class,'Blog'))]" \
     )
 
     # The -L flag tells curl to follow redirects

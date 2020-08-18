@@ -82,6 +82,8 @@ exportMarkdownPagesToHtml() {
     exportFolder='newsletter/'
     cssPath='../styles/page.css'
   else
+    echo "Parameter $1 to exportMarkdownPagesToHtml isn't valid"
+    return [n]
   fi
 
   for f in *.md

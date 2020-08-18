@@ -7,9 +7,9 @@ set -o vi
 KEYTIMEOUT=1
 
 # Import all custom shell functions from directory
-for f in ~/.scripts/* ; do
-    source $f
-done
+#for f in ~/.scripts/* ; do
+#    source $f
+#done
 
 # iTerm
 export LSCOLORS="ExfxcxdxBxexexaxaxaxax"
@@ -19,9 +19,14 @@ export PROMPT='%~ -> '
 # Env variables
 export EDITOR="vim"
 
-# Personal website commands
-alias tcompile='pandoc --template=~/.pandoc/templates/top.html -c ./styles/blog.css'
-alias ncompile='pandoc --template=~/.pandoc/templates/nested.html -c ../styles/blog.css'
+# YouTube download tools
+function ytdlm() {
+  youtube-dl -i --extract-audio --audio-format mp3 --audio-quality 0 $1
+}
+
+# Doxygen
+alias dDoxygen="doxygen docs/doxyfile && open docs/html/files.html"
+#alias mDoxygen="rm -r docs/html && /Users/liamhinzman/Documents/resources/applications/m.css/documentation/doxygen.py docs/doxyfile-mcss"
 
 # arbtt
 alias tt='arbtt-stats'
@@ -40,7 +45,6 @@ alias ncdu="ncdu --color dark -x --exclude .git --exclude node_modules"
 plugins=(fasd)
 eval "$(fasd --init auto)"
 alias v='f -e vim'                              # Quick opening files with vim via fasd
-alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty git log
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -55,13 +59,17 @@ fpp() {
         grep -r -l $1 ./ | fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'
     fi
 }
-# fzf git diff
-alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'"
 # fzf directory
 cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
 # Filter fzf; Affects fzf.vim
 export FZF_DEFAULT_COMMAND="fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/'"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# Git aliases
+alias gc='git commit -v'
+alias gca='git commit -v -a'
+alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty git log
+alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'" # fzf git diff
 
 fdd() { fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/' }
 
@@ -71,6 +79,11 @@ eval "$(pyenv virtualenv-init -)"
 
 # over-the-wire CTF
 alias sshotw='ssh bandit.labs.overthewire.org -p 2220'
+
+# Build and run with make
+function cb() {
+  cd ../build && cmake .. && make && ./$(awk -F "(" 'NR==1{print substr($2, 1, length($2)-1)}' ../CMakeLists.txt) && cd ../src
+}
 
 # Mirror window and tab name
 # Useful for arbtt tracking
@@ -82,5 +95,9 @@ iterm_both () { set_iterm_name 0 $@; }
 iterm_tab () { set_iterm_name 1 $@; }
 iterm_window () { set_iterm_name 2 $@; }
 
-# Haskell
+# Haskell, for arbtt
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"
+
+export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0"
+export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache"
+export GUILE_SYSTEM_EXTENSIONS_PATH="/usr/local/lib/guile/3.0/extensions"
