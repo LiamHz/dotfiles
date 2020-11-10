@@ -12,7 +12,7 @@ getSortedEntries() {
   for f in *.md
   do
     extract-yaml-header $f | \
-    yq r - date 
+    yq r - date
   done | \
   sort -rn | > sortedDates
 }
@@ -31,7 +31,7 @@ generateMarkdownArchivePage() {
 
   getSortedEntries $1
 
-  # Initalize appropriate archive page
+  # Initialize appropriate archive page
   cd "$SITE_DIRECTORY"/md-$1
   sortedDateArray=($(< sortedDates))
   rm sortedDates
@@ -81,6 +81,11 @@ exportMarkdownPagesToHtml() {
     templateName='nested'
     exportFolder='newsletter/'
     cssPath='../styles/page.css'
+  elif [[ $1 == 'cooking' ]]
+  then
+    templateName='nested'
+    exportFolder='cooking/'
+    cssPath='../styles/page.css'
   else
     echo "Parameter $1 to exportMarkdownPagesToHtml isn't valid"
     return [n]
@@ -94,15 +99,71 @@ exportMarkdownPagesToHtml() {
   done
 }
 
+generateMarkdownRecipeGallery() {
+  getSortedEntries $1
+
+  # Initialize appropriate archive page
+  cd "$SITE_DIRECTORY"/md-$1
+  sortedDateArray=($(< sortedDates))
+  rm sortedDates
+  file="../md-pages/$1.md"
+  touch $file
+
+  echo ---                 > $file
+  echo title: \"Cooking\" >> $file
+  echo ...                >> $file
+  echo                    >> $file
+
+  echo \# "How to Feast as a College Student" >> $file
+  echo _Meals I love that are cheap, tasty, and easy to make_ >> $file
+  echo >> $file
+  echo "<div class='image-gallery'>" >> $file
+
+  for d in $sortedDateArray
+  do
+    for f in *.md
+    do
+      date=$(extract-yaml-header $f | yq r - date)
+
+      # TODO this results in unexpected behavior if
+      #      multiple posts have the same date
+      if [[ "$date" == "$d" ]]
+      then
+        title=$(extract-yaml-header $f | yq r - title)
+
+        url=$(extract-yaml-header $f | yq r - url)
+
+        img=$(extract-yaml-header $f | yq r - img)
+
+        #echo "[![Image of $title]($img)][($1/$url.html)]" >> $file
+        #echo "<a href='$1/$url.html'><img src=\"$img\")]($1/$url.html)" >> $file
+        echo "[<img src=\"$img\">]($1/$url.html)" >> $file
+        echo "[$title]($1/$url.html)"   >> $file
+        echo                            >> $file
+
+        # TODO Create grid layout CSS for recipe gallery
+        #      Re-use commented out code on home page
+
+        # TODO Add cooking link to nav bar pandoc templates
+      fi
+    done
+  done
+
+  echo "</div>" >> $file
+}
+
 site-compile() {
   cd "$SITE_DIRECTORY"
 
   generateMarkdownArchivePage blog
   generateMarkdownArchivePage newsletter
 
+  generateMarkdownRecipeGallery cooking
+
   exportMarkdownPagesToHtml pages
   exportMarkdownPagesToHtml blog
   exportMarkdownPagesToHtml newsletter
+  exportMarkdownPagesToHtml cooking
 
   cd "$SITE_DIRECTORY"
 }

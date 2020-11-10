@@ -1,3 +1,4 @@
+zmodload zsh/zprof
 # Import auth credentials
 source ~/.auth
 
@@ -7,9 +8,9 @@ set -o vi
 KEYTIMEOUT=1
 
 # Import all custom shell functions from directory
-#for f in ~/.scripts/* ; do
-#    source $f
-#done
+for f in ~/.scripts/* ; do
+    source $f
+done
 
 # iTerm
 export LSCOLORS="ExfxcxdxBxexexaxaxaxax"
@@ -23,6 +24,23 @@ export EDITOR="vim"
 function ytdlm() {
   youtube-dl -i --extract-audio --audio-format mp3 --audio-quality 0 $1
 }
+
+# dgraph
+alias dgzero="/usr/local/bin/dgraph alpha --lru_mb 1024"
+alias dgalpha="/usr/local/bin/dgraph zero"
+alias dgratel="/usr/local/bin/dgraph-ratel"
+
+alias p3="python3"
+alias yt="mpsyt"
+
+# Misc
+alias cl="clear"
+
+# Turbo Boost Switcher
+alias tbs="sudo /Applications/Turbo\ Boost\ Switcher.app/Contents/MacOS/Turbo\ Boost\ Switcher"
+
+# Drill SRS
+alias srs="drill-srs"
 
 # Doxygen
 alias dDoxygen="doxygen docs/doxyfile && open docs/html/files.html"
@@ -44,23 +62,28 @@ alias ncdu="ncdu --color dark -x --exclude .git --exclude node_modules"
 # fasd
 plugins=(fasd)
 eval "$(fasd --init auto)"
-alias v='f -e vim'                              # Quick opening files with vim via fasd
+alias v='f -e vim'           # Quick opening files with vim via fasd
+
+count() {
+  find . -name "*.$1" | xargs wc -l
+}
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
 # fzf with code preview
-alias vpp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'"
+alias vp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'"
 # fzf with grep and code preview
-fpp() {
+fp() {
     if (($# == 0)) ; then
-        vpp
+        vp
     else
         grep -r -l $1 ./ | fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'
     fi
 }
+
 # fzf directory
-cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
+#cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
 # Filter fzf; Affects fzf.vim
 export FZF_DEFAULT_COMMAND="fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/'"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -68,21 +91,22 @@ export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 # Git aliases
 alias gc='git commit -v'
 alias gca='git commit -v -a'
+alias gs='git status'
 alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty git log
 alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'" # fzf git diff
 
-fdd() { fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/' }
+#fdd() { fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/' }
 
 # Pyenv
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+#eval "$(pyenv init -)"
+#eval "$(pyenv virtualenv-init -)"
 
 # over-the-wire CTF
 alias sshotw='ssh bandit.labs.overthewire.org -p 2220'
 
 # Build and run with make
 function cb() {
-  cd ../build && cmake .. && make && ./$(awk -F "(" 'NR==1{print substr($2, 1, length($2)-1)}' ../CMakeLists.txt) && cd ../src
+  cd build && cmake .. && make && ./$(awk -F "(" 'NR==1{print substr($2, 1, length($2)-1)}' ../CMakeLists.txt) && cd ..
 }
 
 # Mirror window and tab name

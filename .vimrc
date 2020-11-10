@@ -52,7 +52,7 @@ source ~/.cache/calendar.vim/credentials.vim
 
 " Leader remaps
 "nnoremap <Leader>t :w<CR>:e ~/Documents/personal/notes/todo.md<CR>
-nnoremap <Leader>t :term<CR><C-w>15-
+nnoremap <Leader>t :term<CR><C-w>5-
 nnoremap <Leader>s :w<CR>
 nnoremap <Leader>c :Calendar<CR>
 let mapleader=" "
@@ -68,6 +68,9 @@ nnoremap <Leader>gd :Gvdiffsplit<CR>
 
 " Open Markdown style relative file
 "nnoremap <Leader>g :w<CR>f(lgf
+
+" Visual select pasted text
+nnoremap gp `[v`]
 
 " Write and switch to alternate file
 nnoremap <Leader>p <C-^>
@@ -110,6 +113,9 @@ nnoremap th  :tabfirst<CR>
 nnoremap tl  :tablast<CR>
 nnoremap td  :tabclose<CR>
 nnoremap tm  :tabm<Space>
+
+" Autocompletion
+inoremap <C-X><C-l> <C-X><C-L>
 
 " Map <Enter> key to select highlighted menu item when completion popup menu is visible
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
@@ -168,14 +174,22 @@ augroup Config
   autocmd BufNewFile,BufRead * setlocal completeopt=menuone
   " Enable coc for specific files
   autocmd FileType * execute "silent! CocDisable"
-  autocmd BufNew,BufEnter *.cpp,*.h,*.hpp execute "silent! CocEnable"
-  autocmd BufLeave *.cpp,*.h,*.hpp execute "silent! CocDisable"
+  autocmd BufNew,BufEnter *.cpp,*.h,*.hpp,*.js execute "silent! CocEnable"
+  autocmd BufLeave *.cpp,*.h,*.hpp,*.js execute "silent! CocDisable"
+augroup END
+
+" GLSL syntax highlighting
+autocmd! BufNewFile,BufRead *.vs,*.fs,*.vert,*.frag set ft=glsl
+
+augroup PyFiles
+  autocmd!
+  autocmd FileType python nnoremap <Leader>rp :!python3 %<CR>
 augroup END
 
 augroup CppFiles
   autocmd!
-  autocmd FileType cpp nnoremap <Leader>rc :!cd build && make && ./Excal && cd ..<CR>
-  autocmd FileType cpp nnoremap <Leader>rb :!cd build && cmake .. && make && ./Excal && cd ..<CR>
+  autocmd FileType cpp,glsl nnoremap <Leader>rc :!cd build && make && ./Excal && cd ..<CR>
+  autocmd FileType cpp,glsl nnoremap <Leader>rb :!cd build && cmake .. && make && ./Excal && cd ..<CR>
   autocmd FileType cpp nnoremap <silent> <Leader>dd :!cd ../build && cmake .. && make<CR>
     \:Termdebug ../build/Excal<CR>
     \set startup-with-shell off<CR>
@@ -190,48 +204,49 @@ augroup CppFiles
   "autocmd FileType cpp nnoremap <Leader>ll mz?void .*(<CR>V%$%:Limelight<CR>'z
 augroup END
 
-" GLSL syntax highlighting
-autocmd! BufNewFile,BufRead *.vs,*.fs,*.vert,*.frag set ft=glsl
-
 augroup MarkdownFiles
   " Prevent autocmds from piling up upon reloading vimrc
   autocmd!
   " Spellcheck
   autocmd FileType markdown setlocal spell
+  autocmd BufRead band-routine.md setlocal nospell
   " Align on character
   autocmd FileType markdown nnoremap <Leader><Bslash> vip:EasyAlign*<Bar><CR>
   " Generate valid ToC for markdown file
   autocmd FileType markdown nnoremap <Leader>i :InsertToc<CR>i## Table of Contents<ESC>vip:s/\((#.*\)\@<=[\.:']//g<CR>{j
   " Run Markdown code block with scheme
   autocmd FileType markdown nnoremap <Leader>rl ?```<CR>jVNk:term scheme<CR><C-W>k<C-O><C-O><C-W>j
+  " Run Markdown code block with Python
+  autocmd FileType markdown nnoremap <Leader>rp ?```<CR>jVNk:term python3<CR><C-W>k<C-O><C-O><C-W>j
   " Launch Markdown commands
   autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
   autocmd FileType markdown nnoremap <Leader>; :Toc<CR>
   " Custom highlight group
   autocmd FileType * hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  autocmd FileType * hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
   " Regex match for mdTodo group
   " Specify optional included trailing date format
-  autocmd FileType * call matchadd('mdTodo', '\v.{-}\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
-  " Disable coc
+  autocmd FileType * call matchadd('mdTodo', '\v.{-}\zs(TODO) ([0-9]*\/[0-9]*)*')
+  autocmd FileType * call matchadd('mdDone', '\v.{-}\zs(DONE) ([0-9]*\/[0-9]*)*')
 augroup END
 
 augroup AgendaFiles
   autocmd!
-  autocmd BufRead */notes/todo.md call matchadd('Comment', '/Users/liamhinzman.*')
-  " Clear file, and populate it with all _TODO items in ~/Documents/personal
-  " TODO Create heading 'Today' that matches all TODOs with :put=strftime('%m/%d')
-  " TODO Create keybind that creates a _TODO with the current data using
-  "      :put=strftime('%m'd')
-  " TODO Create keybinds that increment / decrement the day of a _TODO
-  autocmd BufRead */notes/todo.md norm dG
-  autocmd BufRead */notes/todo.md read!
-        \ grep --exclude="**notes/todo.md" -rn TODO ~/Documents/personal
-        \ | awk -F ':' '{sub(/  *[^a-zA-Z]*TODO/, "TODO"); print $3"|"$1":"$2}'
-        \ | column -t -s "|"
-        \ | sort -n 
-  autocmd BufRead */notes/todo.md norm ggdd
-  autocmd BufRead */notes/todo.md nnoremap <Leader>j :w<CR>$F/gF
-  autocmd BufEnter */notes/todo.md setlocal nospell
+  "autocmd BufRead */notes/todo.md call matchadd('Comment', '/Users/liamhinzman.*')
+  "" Clear file, and populate it with all _TODO items in ~/Documents/personal
+  "" TODO Create heading 'Today' that matches all TODOs with :put=strftime('%m/%d')
+  "" TODO Create keybind that creates a _TODO with the current data using
+  ""      :put=strftime('%m'd')
+  "" TODO Create keybinds that increment / decrement the day of a _TODO
+  "autocmd BufRead */notes/todo.md norm dG
+  "autocmd BufRead */notes/todo.md read!
+  "      \ grep --exclude="**notes/todo.md" -rn TODO ~/Documents/personal
+  "      \ | awk -F ':' '{sub(/  *[^a-zA-Z]*TODO/, "TODO"); print $3"|"$1":"$2}'
+  "      \ | column -t -s "|"
+  "      \ | sort -n 
+  "autocmd BufRead */notes/todo.md norm ggdd
+  "autocmd BufRead */notes/todo.md nnoremap <Leader>j :w<CR>$F/gF
+  "autocmd BufEnter */notes/todo.md setlocal nospell
 augroup END
 
 " Incremental search
@@ -260,18 +275,22 @@ let g:UltiSnipsJumpForwardTrigger="<c-b>"
 let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " Limelight and Goyo config
-let g:goyo_width=80
+let g:goyo_width=81
 let g:limelight_conceal_ctermfg = 'gray'
 let g:limelight_conceal_ctermfg = 240
 
 function! s:goyo_enter()
   hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-  call matchadd('mdTodo', '\v.*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+  hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  call matchadd('mdTodo', '\v.*\zs(TODO) ([0-9]*\/[0-9]*)*')
+  call matchadd('mdDone', '\v.*\zs(DONE) ([0-9]*\/[0-9]*)*')
 endfunction
 
 function! s:goyo_leave()
   hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-  call matchadd('mdTodo', '\v.*\zs(TODO|DONE) ([0-9]*\/[0-9]*)*')
+  hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  call matchadd('mdTodo', '\v.*\zs(TODO) ([0-9]*\/[0-9]*)*')
+  call matchadd('mdDone', '\v.*\zs(DONE) ([0-9]*\/[0-9]*)*')
 endfunction
 
 autocmd! User GoyoEnter nested call <SID>goyo_enter()
@@ -290,8 +309,9 @@ let g:mkdp_auto_close = 0
 let g:mkdp_refresh_slow = 1
 let g:mkdp_page_title = '${name}'
 let g:mkdp_preview_options = {
-      \ 'maid': { 'theme': 'default' }
-      \ }
+  \ 'disable_sync_scroll': 0
+\ }
+  "\ 'maid': { 'theme': 'default' },
 let g:mkdp_markdown_css=expand('~/Documents/resources/dev/github-markdown.css')
 
 augroup FiletypeSpecificSettings
@@ -299,6 +319,7 @@ augroup FiletypeSpecificSettings
   autocmd FileType * xmap ga <Plug>(EasyAlign)
   autocmd FileType cfg setlocal syntax=haskell
   autocmd FileType cpp let g:goyo_width=90
+  autocmd Filetype python setlocal et ts=2 sw=2 sts=2
   autocmd Filetype html setlocal et ts=4 sw=4 sts=4
 augroup END
 
