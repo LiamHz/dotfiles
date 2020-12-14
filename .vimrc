@@ -13,7 +13,9 @@ Plug 'junegunn/goyo.vim'
 Plug 'junegunn/limelight.vim'
 
 " Color schemes
-Plug 'morhetz/gruvbox'
+"Plug 'morhetz/gruvbox'
+Plug 'arcticicestudio/nord-vim'
+Plug 'joshdick/onedark.vim'
 
 "Syntax support
 Plug 'sheerun/vim-polyglot'
@@ -92,6 +94,7 @@ nnoremap [q :w<CR>:cprevious<CR>
 " Normal remaps
 nnoremap Y y$
 nnoremap Q @q
+nnoremap R @r
 
 " Fast indentation
 nnoremap > >>
@@ -123,12 +126,13 @@ inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 
 " Colorscheme
 syntax on
-set background=dark
-let g:gruvbox_italic = 1
-let g:gruvbox_italicize_comments = 0
-let g:gruvbox_contrast_dark = 'hard'
-let g:gruvbox_invert_selection='0'
-colorscheme gruvbox
+"set background=dark
+"let g:gruvbox_italic = 1
+"let g:gruvbox_italicize_comments = 0
+"let g:gruvbox_contrast_dark = 'hard'
+"let g:gruvbox_invert_selection='0'
+"colorscheme gruvbox
+colorscheme nord
 
 " Column highlight
 "highlight OverLength ctermbg=red ctermfg=white guibg=#592929
@@ -184,6 +188,7 @@ autocmd! BufNewFile,BufRead *.vs,*.fs,*.vert,*.frag set ft=glsl
 augroup PyFiles
   autocmd!
   autocmd FileType python nnoremap <Leader>rp :!python3 %<CR>
+  autocmd FileType elixir nnoremap <Leader>rp :!elixir %<CR>
 augroup END
 
 augroup CppFiles
@@ -222,12 +227,12 @@ augroup MarkdownFiles
   autocmd FileType markdown nnoremap <Leader>d :MarkdownPreview<CR>
   autocmd FileType markdown nnoremap <Leader>; :Toc<CR>
   " Custom highlight group
-  autocmd FileType * hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-  autocmd FileType * hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  autocmd FileType * hi mdTodo term=standout cterm=bold ctermfg=13 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  autocmd FileType * hi mdDone term=standout cterm=bold ctermfg=13 gui=bold,italic guifg=#ffa0a0 guibg=bg
   " Regex match for mdTodo group
   " Specify optional included trailing date format
-  autocmd FileType * call matchadd('mdTodo', '\v.{-}\zs(TODO) ([0-9]*\/[0-9]*)*')
-  autocmd FileType * call matchadd('mdDone', '\v.{-}\zs(DONE) ([0-9]*\/[0-9]*)*')
+  autocmd FileType * call matchadd('mdTodo', '\v.{-}\zs(TODO)')
+  autocmd FileType * call matchadd('mdDone', '\v.{-}\zs(DONE)')
 augroup END
 
 augroup AgendaFiles
@@ -280,15 +285,15 @@ let g:limelight_conceal_ctermfg = 'gray'
 let g:limelight_conceal_ctermfg = 240
 
 function! s:goyo_enter()
-  hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-  hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  hi mdTodo term=standout cterm=bold ctermfg=13 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  hi mdDone term=standout cterm=bold ctermfg=142 gui=bold,italic guifg=#ffa0a0 guibg=bg
   call matchadd('mdTodo', '\v.*\zs(TODO) ([0-9]*\/[0-9]*)*')
   call matchadd('mdDone', '\v.*\zs(DONE) ([0-9]*\/[0-9]*)*')
 endfunction
 
 function! s:goyo_leave()
-  hi mdTodo term=standout cterm=bold ctermfg=13 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
-  hi mdDone term=standout cterm=bold ctermfg=142 ctermbg=234 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  hi mdTodo term=standout cterm=bold ctermfg=13 gui=bold,italic guifg=#ffa0a0 guibg=bg
+  hi mdDone term=standout cterm=bold ctermfg=142 gui=bold,italic guifg=#ffa0a0 guibg=bg
   call matchadd('mdTodo', '\v.*\zs(TODO) ([0-9]*\/[0-9]*)*')
   call matchadd('mdDone', '\v.*\zs(DONE) ([0-9]*\/[0-9]*)*')
 endfunction
@@ -320,7 +325,7 @@ augroup FiletypeSpecificSettings
   autocmd FileType cfg setlocal syntax=haskell
   autocmd FileType cpp let g:goyo_width=90
   autocmd Filetype python setlocal et ts=2 sw=2 sts=2
-  autocmd Filetype html setlocal et ts=4 sw=4 sts=4
+  autocmd Filetype html setlocal et ts=2 sw=2 sts=2
 augroup END
 
 

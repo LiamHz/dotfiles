@@ -17,6 +17,10 @@ export LSCOLORS="ExfxcxdxBxexexaxaxaxax"
 alias ls='ls -G'
 export PROMPT='%~ -> '
 
+# Path
+path+=('/Users/liamhinzman/cli')
+export PATH
+
 # Env variables
 export EDITOR="vim"
 
@@ -52,8 +56,13 @@ alias ttd='arbtt-stats --dump-samples'
 alias ttd-a='arbtt-stats --dump-samples | grep \* | sort | uniq -c | sort -n'
 alias tt-dump='arbtt-dump'
 
+# Pomodoro
+alias pomo='pomodoro'
+alias np='noti pomodoro'
+alias nb='noti pomodoro 5'
+
 # bat
-export BAT_THEME="gruvbox"
+export BAT_THEME="nord"
 alias bat="bat --style=plain"
 
 # ncdu

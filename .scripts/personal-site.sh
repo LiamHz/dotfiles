@@ -76,6 +76,11 @@ exportMarkdownPagesToHtml() {
     templateName='nested'
     exportFolder='blog/'
     cssPath='../styles/page.css'
+  elif [[ $1 == 'journal' ]]
+  then
+    templateName='nested'
+    exportFolder='journal/'
+    cssPath='../styles/page.css'
   elif [[ $1 == 'newsletter' ]]
   then
     templateName='nested'
@@ -164,6 +169,7 @@ site-compile() {
   exportMarkdownPagesToHtml blog
   exportMarkdownPagesToHtml newsletter
   exportMarkdownPagesToHtml cooking
+  exportMarkdownPagesToHtml journal
 
   cd "$SITE_DIRECTORY"
 }
