@@ -21,6 +21,9 @@ generateMarkdownArchivePage() {
   if [[ $1 == 'blog' ]]
   then
     pageTitle='Blog Archive'
+  elif [[ $1 == 'private-repo' ]]
+  then
+    pageTitle='Private Repo'
   elif [[ $1 == newsletter ]]
   then
     pageTitle='Newsletter'
@@ -60,6 +63,13 @@ generateMarkdownArchivePage() {
       fi
     done
   done
+
+  if [[ $1 == 'private-repo' ]]
+  then
+    echo >> $file
+    echo "If you want notifications for posts or to leave semi-public comments, follow my [Twitter alt](https://twitter.com/LiamHinzman). DM me about anything you find interesting here." >> $file
+  fi
+
 }
 
 exportMarkdownPagesToHtml() {
@@ -73,13 +83,13 @@ exportMarkdownPagesToHtml() {
     cssPath='./styles/page.css'
   elif [[ $1 == 'blog' ]]
   then
-    templateName='nested'
+    templateName='post'
     exportFolder='blog/'
     cssPath='../styles/page.css'
-  elif [[ $1 == 'journal' ]]
+  elif [[ $1 == 'private-repo' ]]
   then
-    templateName='nested'
-    exportFolder='journal/'
+    templateName='post'
+    exportFolder='private-repo/'
     cssPath='../styles/page.css'
   elif [[ $1 == 'newsletter' ]]
   then
@@ -162,6 +172,7 @@ site-compile() {
 
   generateMarkdownArchivePage blog
   generateMarkdownArchivePage newsletter
+  generateMarkdownArchivePage private-repo
 
   generateMarkdownRecipeGallery cooking
 
@@ -169,7 +180,7 @@ site-compile() {
   exportMarkdownPagesToHtml blog
   exportMarkdownPagesToHtml newsletter
   exportMarkdownPagesToHtml cooking
-  exportMarkdownPagesToHtml journal
+  exportMarkdownPagesToHtml private-repo
 
   cd "$SITE_DIRECTORY"
 }
