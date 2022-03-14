@@ -3,7 +3,6 @@ call plug#begin()
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app & yarn install'  }
 Plug 'junegunn/vim-easy-align'
 Plug 'chmp/mdnav'
-"Plug 'itchyny/calendar.vim'
 
 " Profile startup time
 Plug 'dstein64/vim-startuptime'
@@ -22,11 +21,11 @@ Plug 'sheerun/vim-polyglot'
 Plug 'LiamHz/vim-vulkan'
 
 " Git
-Plug 'tpope/vim-fugitive'
+"Plug 'tpope/vim-fugitive'
 
 " Autocompletion
 "Plug 'xavierd/clang_complete'
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
+"Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " Snippets
 Plug 'SirVer/ultisnips'
@@ -49,15 +48,10 @@ call plug#end()
 " Map leader key to space
 let mapleader=" "
 
-" Source auth credentials
-source ~/.cache/calendar.vim/credentials.vim
-
 " Leader remaps
 "nnoremap <Leader>t :w<CR>:e ~/Documents/personal/notes/todo.md<CR>
 nnoremap <Leader>t :term<CR><C-w>5-
 nnoremap <Leader>s :w<CR>
-nnoremap <Leader>c :Calendar<CR>
-let mapleader=" "
 nnoremap <Leader>k :Goyo <bar> set linebreak<CR>
 nnoremap <Leader>a :MarkdownPreview<CR>
 nnoremap <Leader>l :Limelight!!<CR>
@@ -65,7 +59,7 @@ nnoremap <Leader>o :FzfFiles<CR>
 nnoremap <Leader>f :FzfRg<CR>
 
 " vim-fugitive shortcuts
-nnoremap <Leader>gb :Gblame<CR>
+nnoremap <Leader>gb :Git blame<CR>
 nnoremap <Leader>gd :Gvdiffsplit<CR>
 
 " Open Markdown style relative file
@@ -95,6 +89,8 @@ nnoremap [q :w<CR>:cprevious<CR>
 nnoremap Y y$
 nnoremap Q @q
 nnoremap R @r
+nnoremap j gj
+nnoremap k gk
 
 " Fast indentation
 nnoremap > >>
@@ -162,8 +158,8 @@ nnoremap <silent> gr <Plug>(coc-references)
 " Symbol renaming.
 nnoremap <leader>rn <Plug>(coc-rename)
 
-nnoremap <C-l> f,2lvt,<C-g>
-inoremap <C-l> <ESC>f,2lvt,<C-g>
+" nnoremap <C-l> f,2lvt,<C-g>
+ "inoremap <C-l> <ESC>f,2lvt,<C-g>
 
 " Termdebug
 packadd termdebug
@@ -334,39 +330,4 @@ nnoremap <expr><enter> &ft=="qf" ? "<cr>:lcl<cr>" : (getpos(".")[2]==1 ? "i<cr><
 augroup markdownSettings
   autocmd!
   autocmd FileType markdown setlocal indentexpr=
-augroup END
-
-" calendar.vim
-let g:calendar_google_calendar = 1
-let g:calendar_date_full_month_name=1
-let g:calendar_event_start_time=0
-let g:calendar_clock_12hour=1
-let g:calendar_date_separator=" "
-let g:calendar_skip_event_delete_confirm = 1
-let g:calendar_skip_task_delete_confirm = 1
-let g:calendar_skip_task_clear_completed_confirm = 0
-let g:calendar_view = "month"
-let g:calendar_views = ['year', 'month', 'day_4', 'day']
-let g:weekday_color = 0
-let g:weekday_fg_color = 0
-
-augroup calendar-mappings
-  autocmd!
-  " Remap calendar view navigation
-  autocmd FileType calendar nmap <buffer> <C-h> <Plug>(calendar_view_left)
-  autocmd FileType calendar nmap <buffer> <C-l> <Plug>(calendar_view_right)
-augroup END
-
-" Disable specific highlight groups
-" Enabled highlight groups can be shown by running
-" :so $VIMRUNTIME/syntax/hitest.vim
-augroup calendar-highlights
-  autocmd!
-  autocmd FileType calendar hi! link CalendarSunday Normal
-  autocmd FileType calendar hi! link CalendarSaturday Normal
-  autocmd FileType calendar hi! link CalendarTodaySunday Normal
-  autocmd FileType calendar hi! link CalendarTodaySaturday Normal
-  autocmd FileType calendar hi! link CalendarDayTitle Normal
-  autocmd FileType calendar hi! link CalendarSaturdayTitle Normal
-  autocmd FileType calendar hi! link CalendarSundayTitle Normal
 augroup END

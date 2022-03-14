@@ -1,7 +1,11 @@
 # Personal website commands
 SITE_DIRECTORY='/Users/liamhinzman/Documents/projects/liamhz.github.io'
 
-extract-yaml-header() {
+isModifiedFile() {
+  git status --porcelain | cut -c4- | grep -q $1
+}
+
+extractYamlHeader() {
   awk '/\.\.\./{exit}; {print}' $1
 }
 
@@ -11,8 +15,8 @@ getSortedEntries() {
   # Created sorted array of yaml dates
   for f in *.md
   do
-    extract-yaml-header $f | \
-    yq r - date
+    extractYamlHeader $f | \
+    yq e '.date' -
   done | \
   sort -rn | > sortedDates
 }
@@ -20,16 +24,17 @@ getSortedEntries() {
 generateMarkdownArchivePage() {
   if [[ $1 == 'blog' ]]
   then
-    pageTitle='Blog Archive'
-  elif [[ $1 == 'private-repo' ]]
+    pageTitle='Blog'
+  elif [[ $1 == 'updates' ]]
   then
-    pageTitle='Private Repo'
-  elif [[ $1 == newsletter ]]
-  then
-    pageTitle='Newsletter'
+    pageTitle='Updates'
   else
     echo "Parameter $1 to generateArchive isn't valid"
     return [n]
+  fi
+
+  if ! isModifiedFile md-$1/; then
+    return 0
   fi
 
   getSortedEntries $1
@@ -51,25 +56,18 @@ generateMarkdownArchivePage() {
   do
     for f in *.md
     do
-      date=$(extract-yaml-header $f | yq r - date)
+      date=$(extractYamlHeader $f | yq e '.date' -)
 
       if [[ "$date" == "$d" ]]
       then
-        title=$(extract-yaml-header $f | yq r - title)
+        title=$(extractYamlHeader $f | yq e '.title' -)
 
-        url=$(extract-yaml-header $f | yq r - url)
+        url=$(extractYamlHeader $f | yq e '.url' -)
 
         echo "- [$title]($1/$url.html)" >> $file
       fi
     done
   done
-
-  if [[ $1 == 'private-repo' ]]
-  then
-    echo >> $file
-    echo "If you want notifications for posts or to leave semi-public comments, follow my [Twitter alt](https://twitter.com/LiamHinzman). DM me about anything you find interesting here." >> $file
-  fi
-
 }
 
 exportMarkdownPagesToHtml() {
@@ -86,15 +84,10 @@ exportMarkdownPagesToHtml() {
     templateName='post'
     exportFolder='blog/'
     cssPath='../styles/page.css'
-  elif [[ $1 == 'private-repo' ]]
-  then
-    templateName='post'
-    exportFolder='private-repo/'
-    cssPath='../styles/page.css'
-  elif [[ $1 == 'newsletter' ]]
+  elif [[ $1 == 'updates' ]]
   then
     templateName='nested'
-    exportFolder='newsletter/'
+    exportFolder='updates/'
     cssPath='../styles/page.css'
   elif [[ $1 == 'cooking' ]]
   then
@@ -108,13 +101,21 @@ exportMarkdownPagesToHtml() {
 
   for f in *.md
   do
-    pandoc "$f" -o "../$exportFolder${f%.md}.html" \
-    --template=~/.pandoc/templates/$templateName.html \
-    -c $cssPath
+    # Only run Pandoc on new or modified files
+    if isModifiedFile $f; then
+      sed '1,/<script type="text\/vnd.abc">/s//<script type="text\/vnd.abc">\n%abc-2.2\n%%pagewidth 14cm\n%%bgcolor white\n%%topspace 0\n%%composerspace 0\n%%leftmargin 0.8cm\n%%rightmargin 0.8cm\n/' "$f" |
+      pandoc "$f" -o "../$exportFolder${f%.md}.html" \
+      --template=~/.pandoc/templates/$templateName.html \
+      -c $cssPath
+    fi
   done
 }
 
 generateMarkdownRecipeGallery() {
+  if ! isModifiedFile md-cooking/; then
+    return 0
+  fi
+
   getSortedEntries $1
 
   # Initialize appropriate archive page
@@ -129,8 +130,7 @@ generateMarkdownRecipeGallery() {
   echo ...                >> $file
   echo                    >> $file
 
-  echo \# "How to Feast as a College Student" >> $file
-  echo _Meals I love that are cheap, tasty, and easy to make_ >> $file
+  echo \# "Recipes" >> $file
   echo >> $file
   echo "<div class='image-gallery'>" >> $file
 
@@ -138,17 +138,17 @@ generateMarkdownRecipeGallery() {
   do
     for f in *.md
     do
-      date=$(extract-yaml-header $f | yq r - date)
+      date=$(extractYamlHeader $f | yq e '.date' -)
 
       # TODO this results in unexpected behavior if
       #      multiple posts have the same date
       if [[ "$date" == "$d" ]]
       then
-        title=$(extract-yaml-header $f | yq r - title)
+        title=$(extractYamlHeader $f | yq e '.title' -)
 
-        url=$(extract-yaml-header $f | yq r - url)
+        url=$(extractYamlHeader $f | yq e '.url' -)
 
-        img=$(extract-yaml-header $f | yq r - img)
+        img=$(extractYamlHeader $f | yq e '.img' -)
 
         #echo "[![Image of $title]($img)][($1/$url.html)]" >> $file
         #echo "<a href='$1/$url.html'><img src=\"$img\")]($1/$url.html)" >> $file
@@ -171,16 +171,14 @@ site-compile() {
   cd "$SITE_DIRECTORY"
 
   generateMarkdownArchivePage blog
-  generateMarkdownArchivePage newsletter
-  generateMarkdownArchivePage private-repo
+  generateMarkdownArchivePage updates
 
   generateMarkdownRecipeGallery cooking
 
   exportMarkdownPagesToHtml pages
   exportMarkdownPagesToHtml blog
-  exportMarkdownPagesToHtml newsletter
+  exportMarkdownPagesToHtml updates
   exportMarkdownPagesToHtml cooking
-  exportMarkdownPagesToHtml private-repo
 
   cd "$SITE_DIRECTORY"
 }

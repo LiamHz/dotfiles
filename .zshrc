@@ -1,7 +1,3 @@
-zmodload zsh/zprof
-# Import auth credentials
-source ~/.auth
-
 # Enable vi keybinds
 set -o vi
 # Set delay on <esc> to 10ms
@@ -17,9 +13,26 @@ export LSCOLORS="ExfxcxdxBxexexaxaxaxax"
 alias ls='ls -G'
 export PROMPT='%~ -> '
 
+# Numerai
+source ~/.numerai
+
 # Path
 path+=('/Users/liamhinzman/cli')
+path+=('/Users/liamhinzman/Documents/numerai/repos/bash-tools')
+path+=('/Users/liamhinzman/.pyenv')
+path+=('/Users/liamhinzman/.pyenv/bin')
 export PATH
+
+# Kiev: Elixir version manager
+test -s "$HOME/.kiex/scripts/kiex" && source "$HOME/.kiex/scripts/kiex"
+source $HOME/.kiex/elixirs/elixir-1.12.3.env
+
+# Pyenv
+eval "$(pyenv init --path)"
+eval "$(pyenv virtualenv-init -)"
+
+export LDFLAGS="-L$(brew --prefix zlib)/lib -L$(brew --prefix bzip2)/lib"
+export CPPFLAGS="-I$(brew --prefix zlib)/include -I$(brew --prefix bzip2)/include"
 
 # Env variables
 export EDITOR="vim"
@@ -29,6 +42,7 @@ function ytdlm() {
   youtube-dl -i --extract-audio --audio-format mp3 --audio-quality 0 $1
 }
 
+
 # dgraph
 alias dgzero="/usr/local/bin/dgraph alpha --lru_mb 1024"
 alias dgalpha="/usr/local/bin/dgraph zero"
@@ -36,6 +50,9 @@ alias dgratel="/usr/local/bin/dgraph-ratel"
 
 alias p3="python3"
 alias yt="mpsyt"
+alias sp="spt"
+alias spta="spt pb --transfer 'spotifyd'"
+alias sptb="spt pb --transfer 'Liam’s MacBook Pro'"
 
 # Misc
 alias cl="clear"
@@ -62,7 +79,7 @@ alias np='noti pomodoro'
 alias nb='noti pomodoro 5'
 
 # bat
-export BAT_THEME="nord"
+export BAT_THEME="Nord"
 alias bat="bat --style=plain"
 
 # ncdu
@@ -79,7 +96,8 @@ count() {
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
+export FZF_DEFAULT_OPS="--extended"
+#export FZF_DEFAULT_OPTS="--layout=default --bind='ctrl-o:execute($EDITOR {})+abort'"      # Add `--no-height` to make fzf fullscreen
 # fzf with code preview
 alias vp="fzf --preview 'bat --style=plain --color=always --line-range :500 {}' --preview-window=right:60%:wrap --bind='enter:execute($EDITOR {})+abort'"
 # fzf with grep and code preview
@@ -94,13 +112,17 @@ fp() {
 # fzf directory
 #cf() { cd $HOME"/Documents" && cd "$(fd -t d | fzf --preview="tree -L 1 {}")" }
 # Filter fzf; Affects fzf.vim
-export FZF_DEFAULT_COMMAND="fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/'"
+export FZF_DEFAULT_COMMAND="fd --type f -E '**/archive/' -E '*.pdf' -E '**/projects/graphics/' -E '**/projects/inate/' -E '*.png' -E '**/node_modules/' -E '*.jpg' -E 'resources/' -E '*.jpeg' -E '*.gif'"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # Git aliases
 alias gc='git commit -v'
 alias gca='git commit -v -a'
 alias gs='git status'
+alias gp='git pull'
+alias gph='git push origin HEAD'
+alias gt='git checkout'
+alias gb='git branch | fzf | xargs git checkout'
 alias gl='git log --all --color --oneline --decorate --abbrev-commit' # Pretty git log
 alias gd="git diff --name-only | fzf -m --ansi --preview 'git diff --color=always -- {-1} | diff-so-fancy'" # fzf git diff
 
@@ -134,3 +156,27 @@ iterm_window () { set_iterm_name 2 $@; }
 export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0"
 export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache"
 export GUILE_SYSTEM_EXTENSIONS_PATH="/usr/local/lib/guile/3.0/extensions"
+
+GPG_TTY=$(tty)
+export GPG_TTY
+
+#eval "$(pyenv init -)"
+
+# Erlang
+export ERLANG_ROOT="/usr/local/opt/erlang@24"
+export PATH="$ERLANG_ROOT/bin:$PATH"
+export PATH="/Users/liamhinzman/Library/Python/3.9/bin/:$PATH" 
+
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+export AWS_POINTZERO_ACCOUNT_ID="761651651325"
+#export AWS_PROFILE="pointzero"
+export AWS_PROFILE="default"
+
+alias wtr='curl wttr.in'
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/liamhinzman/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/liamhinzman/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/liamhinzman/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/liamhinzman/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
