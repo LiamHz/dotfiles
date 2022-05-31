@@ -18,7 +18,7 @@ exportMarkdownPagesToHtml() {
     echo "$f"
     pandoc "$f" \
     --from=commonmark+yaml_metadata_block \
-    --template=~/.pandoc/templates/default.html \
+    --template=~/.pandoc/templates/default2.html \
     --output="../$exportFolder${f%.md}.html"
   done
 }

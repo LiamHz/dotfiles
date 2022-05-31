@@ -45,6 +45,9 @@ Plug 'AndrewRadev/linediff.vim'
 Plug 'wsdjeg/vim-fetch'
 call plug#end()
 
+" fast af boi
+Plug 'justinmk/vim-sneak'
+
 " Map leader key to space
 let mapleader=" "
 

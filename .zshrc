@@ -180,3 +180,14 @@ if [ -f '/Users/liamhinzman/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/liamhinzman/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/liamhinzman/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+alias sah='SwitchAudioSource -s "External Headphones"'
+alias sas='SwitchAudioSource -s "MacBook Pro Speakers"'
+alias say='say -v Daniel'
+
+speak() {
+  sas >/dev/null && say "$1" && sah >/dev/null;
+}
+
+export PATH="$HOME/.poetry/bin:$PATH"
+export PATH="/usr/local/opt/python@3.8/bin:$PATH"
